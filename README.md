@@ -195,6 +195,7 @@
 
 6. Procfile
 	```
+	release: python manage.py migrate
 	web: gunicorn backend.wsgi
 	```
 	Procfile.window
