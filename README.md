@@ -1,70 +1,309 @@
-# Getting Started with Create React App
+# Django React Boilerplate
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Reference:
+<https://dev.to/shakib609/deploy-your-django-react-js-app-to-heroku-2bck>
+<https://blog.heroku.com/from-project-to-productionized-python>
 
-## Available Scripts
+## Setup Step
 
-In the project directory, you can run:
+1. Create React App
+	`npx create-react-app django-react-boilerplate`
+	'cd django-react-boilerplate`
+	
+	```
+	django-react-boilerplate
+	├── node_modules
+	├── public
+	├── src
+	├── package.json
+	└── package-lock.json
+	```
+2. Create Django Porject
+	
+	1. create `requirements.txt`
+		```
+		django
+		gunicorn
+		django-heroku
+		django-environ
+		requests
+		whitenoise
+		djangorestframework
+		```
+	
+	2. setup virtual environment
+		`pipenv install -r requirements.txt`
+		`pipenv shell`
+		
+	3. create django project
+		`django-admin startproject backend .`
+		
+			```
+			django-react-boilerplate
+			├── backend
+			│   ├── __init__.py
+			│   ├── asgi.py
+			│   ├── settings.py
+			│   ├── urls.py
+			│   └── wsgi.py
+			├── node_modules
+			├── public
+			├── src
+			├── package.json
+			├── package-lock.json
+			├── manage.py
+			├── Pipfile
+			├── Pipfile.lock
+			└── requirements.txt
+			```
+3. Create App `frontend`
+	`python manage.py startapp frontend`
 
-### `npm start`
+4. Update React setting
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+	1. Move `public` and `src` under `frontend`
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+    2. Create `package.json` under `frontend`
+        ```javascript
+        {
+        }
+        ```
+	
+	3. Create `static` directory inside `frontend/public` 
+		And move files except `index.html` into `static`
+		
+		```
+		frontend
+		├── src
+		├── public
+		│   ├── index.html
+		│   └── static
+		│  	    ├── favicon.ico
+		│  	    ├── logo192.png
+		│  	    ├── logo512.png
+		│  	    └── manifest.json
+		└── package.json
+		```
 
-### `npm test`
+	4. Update `package.json` at the root directory
+	
+	```javascript
+	{
+	  "scripts": {
+	      ...
+	   	  "build": "cd frontend && react-scripts build",
+	   	  ...
+	  },
+	  ...
+	  "proxy": "http://localhost:8000"
+	}
+	```
+		
+5. Update Django Setup
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+	1. Update `frontend/views.py`
+	
+		```python
+		from django.views.generic import TemplateView
+		from django.views.decorators.cache import never_cache
 
-### `npm run build`
+		# Serve Single Page Application
+		indexView = never_cache(TemplateView.as_view(template_name='index.html'))
+		```
+		
+	2. Create `frontend/urls.py`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+		```python
+		from django.urls import path
+		from .views import (
+			indexView, 
+		)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+		app_name = 'frontend'
+		urlpatterns = [
+			path('', indexView, name='index'),
+		]
+		```
+	
+	3. Update `backend/urls.py`
+	
+		```python
+		from django.contrib import admin
+		from django.urls import path, include
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+		urlpatterns = [
+			path('', include('frontend.urls')),
+			path('admin/', admin.site.urls),
+		]
+		```
+		
+	4. update `backend/setttings.py`
+		* django_heroku
+			```python
+			import django_heroku
 
-### `npm run eject`
+			django_heroku.settings(locals())
+			```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+		* rest_framework, custom app
+			```python
+			INSTALLED_APPS = [
+				...
+				'rest_framework',
+				'frontend',
+			]
+			```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+		* whitenoise
+			```python
+			MIDDLEWARE = [
+				'django.middleware.security.SecurityMiddleware',
+				'whitenoise.middleware.WhiteNoiseMiddleware', 
+				...
+			]
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+			# Simplified static file serving.
+			# https://warehouse.python.org/project/whitenoise/
+			STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+			```
+		* templates
+			```python
+			TEMPLATES = [
+				{
+					...
+					'DIRS': [
+						os.path.join(BASE_DIR, 'frontend', 'build')
+					],
+					...
+				}
+			]
+			```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+		* static files
+			```python
+			import os
+			
+			STATIC_URL = '/static/'
+			STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+			STATICFILES_DIRS = [
+				os.path.join('frontend', 'build', 'static'),
+			]
+			```
 
-## Learn More
+6. Procfile
+	```
+	web: gunicorn backend.wsgi
+	```
+	Procfile.window
+	```
+	web: python manage.py runserver 0.0.0.0:5000
+	```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+7. Modularize Django settings
+	A new folder `settings` under `backend`
+	Move `settings.py` to `settings/base.py`
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+	Update `settings/base.py`
+	```python
+	BASE_DIR = Path(__file__).resolve().parent.parent.parent
+	```
 
-### Code Splitting
+	Update `backend/asgi.py`, `backend/wsgi.py`, `manage.py`
+	```python
+	os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings.base')
+	```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+8. Add settings for Heroku
+	Create new file `heroku.py` in `backend/settings`
 
-### Analyzing the Bundle Size
+	```python
+	import environ
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+	# If using in your own project, update the project namespace below
+	from backend.settings.base import *
 
-### Making a Progressive Web App
+	env = environ.Env(
+		# set casting, default value
+		DEBUG=(bool, False)
+	)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+	# False if not in os.environ
+	DEBUG = env('DEBUG')
 
-### Advanced Configuration
+	# Raises django's ImproperlyConfigured exception if SECRET_KEY not in os.environ
+	SECRET_KEY = env('SECRET_KEY')
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+	ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
-### Deployment
+	# Parse database connection url strings like psql://user:pass@127.0.0.1:8458/db
+	DATABASES = {
+		# read os.environ['DATABASE_URL'] and raises ImproperlyConfigured exception if not found
+		'default': env.db(),
+	}
+	```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+9. Directory structure
+    ```
+    django-react-boilerplate
+    ├── backend
+    │   ├── settings
+    │   │   ├── base.py    // Django develop setting
+    │   │   └── heroku.py  // Django Heroku Production setting
+    │   ├── __init__.py
+    │   ├── asgi.py
+    │   ├── urls.py
+    │   └── wsgi.py
+    ├── frontend
+    │   ├── build          // React App Build Directory
+    │   │   └── static
+    │   ├── src            // React App Source Directory
+    │   ├── public         // React App Public Directory
+    │   │   ├── index.html
+    │   │   └── static
+    │   ├── package.json
+    │   ├── __init__.py
+    │   ├── admin.py
+    │   ├── apps.py
+    │   ├── models.py
+    │   ├── tests.py
+    │   ├── urls.py
+    │   └── views.py
+    ├── manage.py
+    ├── package-lock.json
+    ├── package.json
+    ├── Pipfile
+    ├── Pipfile.lock
+    ├── Procfile
+    ├── Procfile.windows
+    └── requirements.txt
+    ```
+	
+10. Build & Run server
+	`npm run build`
+	`python manage.py collectstatic`
+	`python manage.py runserver`
 
-### `npm run build` fails to minify
+11. Deploy to Heroku
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+    Create App in Heroku
+    ```
+    heroku create
+    ```
+
+    Setting Environment Variable
+    ```
+    heroku config:set ALLOWED_HOSTS=<heroku app url>
+    heroku config:set DJANGO_SETTINGS_MODULE=backend.settings.heroku
+    heroku config:set SECRET_KEY=<secert key>
+    ```
+
+    Add Buildpack
+    ```
+    heroku buildpacks:add --index 1 heroku/nodejs
+    heroku buildpacks:add --index 2 heroku/python
+    ```
+
+    Add Postgres Add-on
+    ```
+    heroku addons:create heroku-postgresql:hobby-dev
+    ```
