@@ -1,14 +1,12 @@
 # Django React Boilerplate
 
-Reference:
-<https://dev.to/shakib609/deploy-your-django-react-js-app-to-heroku-2bck>
-<https://blog.heroku.com/from-project-to-productionized-python>
-
 ## Setup Step
 
 1. Create React App
+
 	`npx create-react-app django-react-boilerplate`
-	'cd django-react-boilerplate`
+	
+	`cd django-react-boilerplate`
 	
 	```
 	django-react-boilerplate
@@ -32,31 +30,36 @@ Reference:
 		```
 	
 	2. setup virtual environment
+	
 		`pipenv install -r requirements.txt`
+		
 		`pipenv shell`
 		
 	3. create django project
+		
 		`django-admin startproject backend .`
 		
-			```
-			django-react-boilerplate
-			├── backend
-			│   ├── __init__.py
-			│   ├── asgi.py
-			│   ├── settings.py
-			│   ├── urls.py
-			│   └── wsgi.py
-			├── node_modules
-			├── public
-			├── src
-			├── package.json
-			├── package-lock.json
-			├── manage.py
-			├── Pipfile
-			├── Pipfile.lock
-			└── requirements.txt
-			```
+		```
+		django-react-boilerplate
+		├── backend
+		│   ├── __init__.py
+		│   ├── asgi.py
+		│   ├── settings.py
+		│   ├── urls.py
+		│   └── wsgi.py
+		├── node_modules
+		├── public
+		├── src
+		├── package.json
+		├── package-lock.json
+		├── manage.py
+		├── Pipfile
+		├── Pipfile.lock
+		└── requirements.txt
+		```
+		
 3. Create App `frontend`
+	
 	`python manage.py startapp frontend`
 
 4. Update React setting
@@ -200,7 +203,9 @@ Reference:
 	```
 
 7. Modularize Django settings
+	
 	A new folder `settings` under `backend`
+	
 	Move `settings.py` to `settings/base.py`
 
 	Update `settings/base.py`
@@ -214,6 +219,7 @@ Reference:
 	```
 
 8. Add settings for Heroku
+	
 	Create new file `heroku.py` in `backend/settings`
 
 	```python
@@ -279,8 +285,11 @@ Reference:
     ```
 	
 10. Build & Run server
+	
 	`npm run build`
+	
 	`python manage.py collectstatic`
+	
 	`python manage.py runserver`
 
 11. Deploy to Heroku
@@ -307,3 +316,9 @@ Reference:
     ```
     heroku addons:create heroku-postgresql:hobby-dev
     ```
+    
+### Reference:
+
+<https://dev.to/shakib609/deploy-your-django-react-js-app-to-heroku-2bck>
+
+<https://blog.heroku.com/from-project-to-productionized-python>
