@@ -318,6 +318,20 @@
     heroku addons:create heroku-postgresql:hobby-dev
     ```
     
+### Setup after clone from Github
+
+1. re-install node_modules
+
+```
+npm i
+```
+
+2. Re-create virtual environment
+
+```
+pipenv install -r requirements.txt	
+```
+
 ### Reference:
 
 <https://dev.to/shakib609/deploy-your-django-react-js-app-to-heroku-2bck>
